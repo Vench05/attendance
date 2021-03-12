@@ -110,6 +110,32 @@ class Timesheet(http.Controller):
         response['status'] = 'error' if not attendance else 'success'
         return request.make_response(json.dumps(response), [('Access-Control-Allow-Origin', '*')])
 
+    @http.route('/api/attendance/info/get', auth='none', type='http', methods=['GET'], csrf=False)
+    def AttendanceGetInfo(self, **kw):
+        response = {
+            "timesheet": []
+        }
+        secret = os.environ.get("secret")
+        print(type(kw))
+        # json.loads(kw)
+        token = jwt.decode(kw['token'], secret, algorithms=["HS256"])
+        user = request.env['res.users'].sudo().browse(int(token['id']))
+        if user:
+            timesheets = request.env['timesheet'].with_user(user.id).search([('create_uid', '=', user.id)])
+            for timesheet in timesheets:
+                print(timesheet.date)
+                response['timesheet'].append({
+                    "id": timesheet.id,
+                    "date": str(timesheet.date),
+                    "project": timesheet.project,
+                    "task": timesheet.task,
+                    "description": timesheet.description
+                })
+            print(response)
+            return request.make_response(json.dumps(response), [('Access-Control-Allow-Origin', '*')])
+        response['status'] = 'error'
+        return request.make_response(json.dumps(response), [('Access-Control-Allow-Origin', '*')])
+
 # for testing
 class Index(http.Controller):
     @http.route('/index', auth='none', type='http', methods=['GET'], csrf=False)
@@ -119,7 +145,7 @@ class Index(http.Controller):
         encoded_jwt = jwt.encode({"some": "payload"}, secret, algorithm="HS256")
         # print(encoded_jwt)
         print(jwt.decode(encoded_jwt, secret, algorithms=["HS256"]))
-        user = request.env['res.users'].sudo().browse(2)
-        print(user.image_1920)
+        
+        print(request.env['timesheet'].with_user(2).search([('create_uid', '=', 6)]))
         return "Hello, World"
 
