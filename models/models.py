@@ -43,7 +43,7 @@ class Timesheet(models.Model):
 
     def _compute_time(self):
         if self.in_id:
-            pass
+            self.duration = self.in_id/60/60
     
     
     

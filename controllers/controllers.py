@@ -105,7 +105,7 @@ class Timesheet(http.Controller):
                     'description': kw['description'] if 'description' in kw else "",
                     'project': kw['project'] if 'project' in kw else "",
                     'task': kw['task'] if 'task' in kw else "",
-                    # 'in_id': [4()] # todo
+                    'in_id': int(kw['timeInId'])
                 })
         response['status'] = 'error' if not attendance else 'success'
         return request.make_response(json.dumps(response), [('Access-Control-Allow-Origin', '*')])
@@ -116,20 +116,22 @@ class Timesheet(http.Controller):
             "timesheet": []
         }
         secret = os.environ.get("secret")
-        print(type(kw))
-        # json.loads(kw)
+        print(kw['token'])
         token = jwt.decode(kw['token'], secret, algorithms=["HS256"])
         user = request.env['res.users'].sudo().browse(int(token['id']))
         if user:
             timesheets = request.env['timesheet'].with_user(user.id).search([('create_uid', '=', user.id)])
             for timesheet in timesheets:
-                print(timesheet.date)
+                print(timesheet.date)                
                 response['timesheet'].append({
                     "id": timesheet.id,
                     "date": str(timesheet.date),
                     "project": timesheet.project,
                     "task": timesheet.task,
-                    "description": timesheet.description
+                    "description": timesheet.description,
+                    "in_id": timesheet.in_id.id,
+                    'log': timesheet.log
+
                 })
             print(response)
             return request.make_response(json.dumps(response), [('Access-Control-Allow-Origin', '*')])
